@@ -1,0 +1,219 @@
+\makeatletter
+
+\RequirePackage{multido}
+\RequirePackage{ifthen}
+
+% Accessoires pour la macro \ent
+
+\newcounter{@ntier} \newcounter{p@rtie} \newcounter{b@se}
+\newcounter{@bs} \newcounter{f@und}
+
+\newcommand{\ms@p}{\hspace{0.15 em}}
+
+\newcommand{\surtr@is}[2]{\ifthenelse{#2>0}{\ifthenelse{#1>99}{#1}{\ifthenelse{#1>9}{0#1}{00#1}}}{#1}}
+
+% \ent{un_entier} permet de formatter automatiquement
+% un nombre entier en insérant aux endroits adéquats
+% des espaces séparateurs des milliers. Les compteurs
+% définis ci-dessus ainsi que les macros \ms@p et
+% \surtr@is sont utilisés par cette macro.
+\newcommand{\ent}[1]{%
+  \setcounter{@ntier}{#1}%
+  \setcounter{b@se}{1000000}%
+  \setcounter{@bs}{\theb@se-1}%
+  \setcounter{f@und}{0}%
+  \mbox{%
+    \multido{\i=0+1}{2}{%
+      \ifthenelse{\the@ntier>\the@bs}{%
+        \setcounter{p@rtie}{\the@ntier/\theb@se}%
+        \surtr@is{\thep@rtie}{\thef@und}\ms@p%
+        \setcounter{@ntier}{\the@ntier-\thep@rtie*\theb@se}%
+        \setcounter{f@und}{1}%
+        }{\ifthenelse{\thef@und>0}{000\ms@p}{}}%
+      \setcounter{b@se}{\theb@se/1000}%
+      \setcounter{@bs}{\theb@se-1}%
+      }%
+    \surtr@is{\the@ntier}{\thef@und}%
+    }%
+  }
+
+\newlength{\sp@cesize}
+
+\newcommand{\cname}[3]{%
+  \settowidth{\sp@cesize}{~}%
+  $<$\,%
+  #1~\hspace{-0.5\sp@cesize}/ \hspace{-0.75\sp@cesize}%
+  #2~\hspace{-0.5\sp@cesize}/ \hspace{-0.75\sp@cesize}%
+  #3%
+  \,$>$%
+}
+
+\newcommand{\noun}[1]{\textsc{#1}} %raccourci pour \textsc
+\newcommand{\ms}[1]{\texttt{#1}} %racccourci pour ``monospaced''
+
+\newcommand{\lat}{\emph} %pour les mots latins
+\newcommand{\for}{\emph} %pour les mots étrangers
+
+\newcommand{\cooc}{cooccurrence}
+\newcommand{\copres}{coprésence}
+\newcommand{\cm}{classe de mots-clés} \newcommand{\cms}{classes de mots-clés}
+\newcommand{\mc}{mot-clé} \newcommand{\mcs}{mots-clés}
+\newcommand{\cvl}{\noun{Chavl}} \newcommand{\cvp}{\ms{chavleps}}
+\newcommand{\cad}{---}
+\newcommand{\etype}{écart type}
+
+\newcommand{\mot}[1]{\textsl{#1}} % formatage standard des mots utilisés comme exemples
+\newcommand{\sememe}[1]{\mot{#1}}
+
+%% \newcommand{\b@rsepa}{\hspace{0.015em}}
+%% \newcommand{\b@rsepb}{\hspace{0.05em}}
+
+\newcommand{\b@rsepa}{\hspace{0.08em}}
+\newcommand{\b@rsepb}{\hspace{0.07em}}
+
+\newcommand{\doubleb@r}{\mbox{/\hspace{-0.25em}/}}
+
+\newcommand{\seme}[1]{\textnormal{/\nolinebreak{}\b@rsepa\nolinebreak{}\textsf{#1}\nolinebreak{}\b@rsepb\nolinebreak{}/\hspace{-0.5mm}}}
+\newcommand{\taxeme}[1]{\textnormal{\doubleb@r\nolinebreak{}\b@rsepa\nolinebreak{}\textsf{#1}\nolinebreak{}\b@rsepb\nolinebreak{}\doubleb@r}\hspace{-0.5mm}}
+
+\newcommand{\gl}[1]{<<\,#1\,>>} % Guillemets standard
+
+\newlength{\boxdecal}
+
+\newenvironment{todo}{%
+  \begin{center}%
+    \begin{minipage}{\textwidth-2cm}%
+      \itshape\color{red}%
+}{%
+  \end{minipage}\end{center}%
+}
+
+\newcounter{si@lreadyUsed}
+\setcounter{si@lreadyUsed}{0}
+
+\newcommand{\si}{%
+  \ifthenelse{\thesi@lreadyUsed=0}{%
+    \setcounter{si@lreadyUsed}{1}%
+    Sémantique interprétative}{%
+    sémantique interprétative%
+  }%
+}
+
+\newcommand{\sd}{sémantique différentielle}
+
+\newcommand{\cetadir}{c'est-à-dire}
+
+\newlength{\quoteWidth}
+
+\RequirePackage{xspace}
+
+\newcommand{\faestos}{\textsc{Faestos}\xspace}
+
+
+% bibliography
+
+\def\thebibliography#1{\section*{References}
+  \global\def\@listi{\leftmargin\leftmargini
+               \labelwidth\leftmargini \advance\labelwidth-\labelsep
+               \topsep 1pt plus 2pt minus 1pt
+               \parsep 0.25ex plus 1pt \itemsep 0.25ex plus 1pt}
+  \list {[\arabic{enumi}]}{\settowidth\labelwidth{[#1]}\leftmargin\labelwidth
+    \advance\leftmargin\labelsep\usecounter{enumi}}
+    \def\newblock{\hskip .11em plus .33em minus -.07em}
+    \sloppy
+    \sfcode`\.=1000\relax}
+
+\def\@up#1{\raise.2ex\hbox{#1}}
+
+% most of cite format is from aclsub.sty by SMS
+
+% don't box citations, separate with ; and a space
+% also, make the penalty between citations negative: a good place to break
+% changed comma back to semicolon pj 2/1/90
+% \def\@citex[#1]#2{\if@filesw\immediate\write\@auxout{\string\citation{#2}}\fi
+% \def\@citea{}\@cite{\@for\@citeb:=#2\do
+%   {\@citea\def\@citea{;\penalty\@citeseppen\ }\@ifundefined
+%      {b@\@citeb}{{\bf ?}\@warning
+%      {Citation `\@citeb' on page \thepage \space undefined}}%
+% {\csname b@\@citeb\endcsname}}}{#1}}
+
+% don't box citations, separate with ; and a space
+% Replaced for multiple citations (pj) 
+% don't box citations and also add space, semicolon between multiple citations
+\def\@citex[#1]#2{\if@filesw\immediate\write\@auxout{\string\citation{#2}}\fi
+  \def\@citea{}\@cite{\@for\@citeb:=#2\do
+     {\@citea\def\@citea{; }\@ifundefined
+       {b@\@citeb}{{\bf ?}\@warning
+        {Citation `\@citeb' on page \thepage \space undefined}}%
+ {\csname b@\@citeb\endcsname}}}{#1}}
+
+% Allow short (name-less) citations, when used in
+% conjunction with a bibliography style that creates labels like
+%       \citename{<names>, }<year>
+% 
+\let\@internalcite\cite
+\def\cite{\def\citename##1{##1, }\@internalcite}
+\def\shortcite{\def\citename##1{}\@internalcite}
+\def\newcite{\def\citename##1{{\frenchspacing##1} (}\@internalciteb}
+
+% Macros for \newcite, which leaves name in running text, and is
+% otherwise like \shortcite.
+\def\@citexb[#1]#2{\if@filesw\immediate\write\@auxout{\string\citation{#2}}\fi
+  \def\@citea{}\@newcite{\@for\@citeb:=#2\do
+    {\@citea\def\@citea{;\penalty\@m\ }\@ifundefined
+       {b@\@citeb}{{\bf ?}\@warning
+       {Citation `\@citeb' on page \thepage \space undefined}}%
+{\csname b@\@citeb\endcsname}}}{#1}}
+\def\@internalciteb{\@ifnextchar [{\@tempswatrue\@citexb}{\@tempswafalse\@citexb[]}}
+
+\def\@newcite#1#2{{#1\if@tempswa, #2\fi)}}
+
+\def\@biblabel#1{\def\citename##1{##1}[#1]\hfill}
+
+%%% More changes made by SMS (originals in latex.tex)
+% Use parentheses instead of square brackets in the text.
+\def\@cite#1#2{({#1\if@tempswa , #2\fi})}
+
+
+% Don't put a label in the bibliography at all.  Just use the unlabeled format
+% instead.
+\def\thebibliography#1{\vskip\parskip%
+\vskip\baselineskip%
+\def\baselinestretch{1}%
+\ifx\@currsize\normalsize\@normalsize\else\@currsize\fi%
+\vskip-\parskip%
+\vskip-\baselineskip%
+\section*{References\@mkboth
+ {References}{References}}\list
+ {}{\setlength{\labelwidth}{0pt}\setlength{\leftmargin}{\parindent}
+ \setlength{\itemindent}{-\parindent}}
+ \def\newblock{\hskip .11em plus .33em minus -.07em}
+ \sloppy\clubpenalty4000\widowpenalty4000
+ \sfcode`\.=1000\relax}
+\let\endthebibliography=\endlist
+
+% Allow for a bibliography of sources of attested examples
+\def\thesourcebibliography#1{\vskip\parskip%
+\vskip\baselineskip%
+\def\baselinestretch{1}%
+\ifx\@currsize\normalsize\@normalsize\else\@currsize\fi%
+\vskip-\parskip%
+\vskip-\baselineskip%
+\section*{Sources of Attested Examples\@mkboth
+ {Sources of Attested Examples}{Sources of Attested Examples}}\list
+ {}{\setlength{\labelwidth}{0pt}\setlength{\leftmargin}{\parindent}
+ \setlength{\itemindent}{-\parindent}}
+ \def\newblock{\hskip .11em plus .33em minus -.07em}
+ \sloppy\clubpenalty4000\widowpenalty4000
+ \sfcode`\.=1000\relax}
+\let\endthesourcebibliography=\endlist
+
+\def\@lbibitem[#1]#2{\item[]\if@filesw 
+      { \def\protect##1{\string ##1\space}\immediate
+        \write\@auxout{\string\bibcite{#2}{#1}}\fi\ignorespaces}}
+
+\def\@bibitem#1{\item\if@filesw \immediate\write\@auxout
+       {\string\bibcite{#1}{\the\c@enumi}}\fi\ignorespaces}
+
+
+\makeatother

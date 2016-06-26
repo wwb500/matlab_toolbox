@@ -1,0 +1,192 @@
+\documentclass[a4paper,twoside]{article}
+\usepackage{amsmath,amsthm,amssymb}
+\usepackage[T1]{fontenc}
+\usepackage[latin1]{inputenc}
+\usepackage[dvips]{graphicx}
+\usepackage[french]{babel}
+
+\input{macro.tex}
+
+\begin{document}
+
+\title{k-averages: criterions, convergence}
+
+\author{Mathias Rossignol}
+
+\maketitle
+
+\section{Conventions, possible objective functions}
+
+Partition of $n$ objects $\mathcal{O} = \left\{o_1, \ldots,
+o_n\right\}$ into $k$ classes $\mathcal{C} = \left\{c_1, \ldots,
+c_k\right\}$. We'll write $n_{c_i}$ the cardinal of class $c_i$, and
+$o_{ij}$ its elements: $c_i = \left\{o_{i1}, \ldots, o_{in_{c_i}}\right\}$.
+
+To simplify below, when we're simply considering one class, no matter
+which, we shall omit the first index and write $c = \left\{o_1,
+\ldots, o_{n_c}\right\}$.
+
+The similarity between objects shall be written $s\left(o_i, o_j\right)$.
+
+What we're interested in: maximising the average intra-class
+object-to-object similarity. That's pretty straightforward, as far as
+I can tell there's only one possible variant: whether we have a
+class-by-class normalization or only a global one.
+
+In the first case, objects appearing in small classes will have more
+\gl{weight} in the function. In the second, big classes will tend to
+dominate the objective function. So: neither is 100\'\%
+satisfying. Better try to implement both and test.
+
+Note that since the number of obejcts does not vary, global
+normalization (divide by number of objects) is equivalent to no
+normalization at all.
+
+Other possible variants: using other averaging methods (geometric
+mean? Does that make sense?). Maybe later.
+
+\section{Impact of object reallocation on class quality}
+
+Let us extend the notation $s$ to the \emph{similarity of an object to a
+  class}, which we define as the average similarity of that object
+with all objects of the class. $s(o,c)$ accepts two definitions,
+depending on whether or not $o$ is in $c$:
+
+If $o \notin c$,
+\begin{equation}
+  s\left(o,c\right) = \frac{1}{n_c} \sum_{i=1}^{n_c}s\left(o, o_i\right)
+\end{equation}
+
+If $o \in c$, then necessarily $\exists i \mid o = o_i$
+\begin{equation} \label{soc_inclass}
+  s\left(o,c\right) = s\left(o_i, c\right) = \frac{1}{n_c-1} \sum_{j=1 \ldots n_c, j \neq i} s\left(o_i, o_j\right)
+\end{equation}
+
+Let's call \gl{quality} of a class the average intra-class object-to-object similarity, and write it $\mathcal{Q}$:
+\begin{equation}
+\mathcal{Q}\left(c\right) = \frac{1}{n_c} \sum_{i=1}^{n_c} s\left(o_i, c\right)
+\end{equation}
+
+Since all objects are in $c$, we use the formula in (\ref{soc_inclass}) to get:
+\begin{equation}
+  \begin{aligned}
+    \mathcal{Q}\left(c\right) & = \frac{1}{n_c} \sum_{i=1}^{n_c} \frac{1}{n_c-1} \sum_{\substack{j=1 \ldots n_c\\j \neq i}} s\left(o_i, o_j\right) \\
+                              & = \frac{1}{n_c(n_c-1)} \sum_{i=1}^{n_c} \sum_{\substack{j=1 \ldots n_c\\j \neq i}} s\left(o_i, o_j\right)
+  \end{aligned}
+\end{equation}
+
+Using the assumption that the similarity matrix is symmetrical, we can reach (this is an indispensable transformation for future calculations):
+\begin{equation}
+    \mathcal{Q}\left(c\right) = \frac{2}{n_c(n_c-1)} \sum_{i=2}^{n_c} \sum_{j=1}^{i-1} s\left(o_i, o_j\right)
+\end{equation}
+
+For future use, let us define the notation:
+\begin{equation}
+  \Sigma(c) = \sum_{i=2}^{n_c} \sum_{j=1}^{i-1} s\left(o_i, o_j\right)
+\end{equation}
+
+Thus:
+\begin{equation}
+    \mathcal{Q}\left(c\right) = \frac{2}{n_c(n_c-1)}\Sigma(c) \phantom{XX}\mathrm{and}\phantom{XX} \Sigma(c) = \frac{n_c(n_c-1)\mathcal{Q}\left(c\right)}{2}
+\end{equation}
+
+
+\subsection{Removing an object from a class}
+
+Assuming that $o \in c$, necessarily $\exists i \mid o=o_i$. Since the
+numbering of objects is arbitrary, we can assume that $o = o_{n_c}$
+then generalize from the result thus obtained.
+
+\begin{equation}
+  \begin{aligned}
+    \mathcal{Q}\left(c \smallsetminus o_{n_c}\right) & = \frac{2}{(n_c-1)(n_c-2)} \sum_{i=2}^{n_c-1} \sum_{j=1}^{i-1} s\left(o_i, o_j\right) \\
+                                                   & = \frac{2}{(n_c-1)(n_c-2)} \left[\Sigma(c) - \sum_{j=1}^{n_c-1} s\left(o_{n_c}, o_j\right) \right] \\
+                                                   & = \frac{2}{(n_c-1)(n_c-2)} \left[\Sigma(c) - (n_c-1)s\left(o_{n_c}, c\right) \right] \\
+                                                   & = \frac{2n_c(n_c-1)\mathcal{Q}(c)}{2(n_c-1)(n_c-2)} - \frac{2(n_c-1)s\left(o_{n_c}, c\right)}{(n_c-1)(n_c-2)}\\
+                                                   & = \frac{n_c \mathcal{Q}(c)  - 2s\left(o_{n_c}, c\right)}{n_c-2}
+  \end{aligned}
+\end{equation}
+
+The quality of a class after removal of an object is thus:
+
+\begin{equation}
+  \mathcal{Q}\left(c \smallsetminus o\right) = \frac{n_c \mathcal{Q}(c)  - 2s\left(o, c\right)}{n_c-2}
+\end{equation}
+
+And the change in quality from its previous value:
+
+\begin{equation} \label{deltaRemove}
+  \begin{aligned}
+    \mathcal{Q}\left(c \smallsetminus o\right) - \mathcal{Q}\left(c\right) & = \frac{n_c \mathcal{Q}(c)  - (n_c-2) \mathcal{Q}(c)  - 2s\left(o, c\right)}{n_c-2} \\
+                                                                           & = \frac{2\left( \mathcal{Q}(c) - s\left(o, c\right)\right)}{n_c-2}
+    \end{aligned}
+\end{equation}
+
+
+\subsection{Adding an object to a class}
+
+Assuming that $o \notin c$, we'll consider for the sake of simplicity that $o$ becomes $o_{n_c+1}$ in the modified class $c$. Following a path similar to above, we get:
+\begin{equation}
+  \begin{aligned}
+    \mathcal{Q}(c \cup o_{n_c+1}) & = \frac{2}{n_c(n_c+1)} \sum_{i=2}^{n_c+1} \sum_{j=1}^{i-1} s\left(o_i, o_j\right) \\
+                                & = \frac{2}{n_c(n_c+1)} \left[\Sigma(c) + n_c s\left(o_{n_c+1}, c\right)\right] \\
+                                & = \frac{(n_c-1) \mathcal{Q}(c)  + 2s\left(o_{n_c+1}, c\right)}{n_c+1}
+  \end{aligned}
+\end{equation}
+
+The quality of a class $c$ after adding an object $o$ is thus:
+
+\begin{equation}
+  \mathcal{Q}\left(c \cup o\right) = \frac{(n_c-1) \mathcal{Q}(c)  + 2s\left(o, c\right)}{n_c+1}
+\end{equation}
+
+And the change in quality from its previous value:
+
+\begin{equation} \label{deltaAdd}
+  \begin{aligned}
+    \mathcal{Q}\left(c \cup o\right) - \mathcal{Q}\left(c\right) & = \frac{(n_c-1) \mathcal{Q}(c)  - (n_c+1) \mathcal{Q}(c)  + 2s\left(o, c\right)}{n_c+1} \\
+                                                                           & = \frac{2\left(s\left(o, c\right)-\mathcal{Q}(c)\right)}{n_c+1}
+    \end{aligned}
+\end{equation}
+
+
+
+
+\section{Impact of object reallocation on global quality (objective function)}
+
+\subsection{Class-normalized objective function}
+
+In that case, the calculation is direct: from (\ref{deltaRemove}) and
+(\ref{deltaAdd}), we can see that the impact on the objective function
+of moving an object $c$ from class $c_s$ (``source''), to whom it
+belongs, to a distinct class $c_t$ (``target'') is:
+
+\begin{equation}
+  \delta = \frac{2\left(s\left(o, c_t\right)-\mathcal{Q}(c_t)\right)}{n_{c_t}+1} + \frac{2\left( \mathcal{Q}(c_s) - s\left(o, c_s\right)\right)}{n_{c_s}-2}
+\end{equation}
+
+Using this value as the basis to decide object reallocation, and only
+performing reallocations while it is strictly positive, ensures that
+the objective function is strictly increasing, and therefore that the
+process converges to one of its local maxima.
+
+\subsection{Object-normalized objective function}
+
+This complicates the calculation a bit, but not much: when moving an
+object $c$ from class $c_s$ (``source''), to whom it belongs, to a
+distinct class $c_t$ (``target''), $(n_{c_s}-1)$ objects are affected
+by the variation in (\ref{deltaRemove}), and $n_{c_t})$ are affected
+by that in (\ref{deltaAdd}), in addition to the variation in simiarity
+of $o$ to the class it belongs to:
+
+\begin{equation}
+  \delta = \frac{2n_{c_t}\left(s\left(o, c_t\right)-\mathcal{Q}(c_t)\right)}{n_{c_t}+1} + \frac{2(n_{c_s}-1)\left( \mathcal{Q}(c_s) - s\left(o, c_s\right)\right)}{n_{c_s}-2} + s(o,c_t) - s(o,c_s)
+\end{equation}
+
+Once again, using this value as the basis to decide object
+reallocation, and only performing reallocations while it is strictly
+positive, ensures that the objective function is strictly increasing,
+and therefore that the process converges to one of its local maxima.
+
+
+\end{document}
