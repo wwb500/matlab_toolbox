@@ -1,0 +1,69 @@
+<!doctype html>
+<html ng-app="components">
+
+  <head>
+    <title>ALC demo</title>
+    <script src="angular.min.js"></script>
+    <script src="angular-ui-0.4.0/common/module.js"></script>
+    <script src="angular-ui-0.4.0/modules/directives/if/if.js"></script>
+    <script src="utils.js"></script>
+    <script src="rgbcolor.js"></script>
+    <script src="LedImage.js"></script>
+    <script src="components2.js"></script>
+    <script src="Sample.js"></script>
+    <script src="alc.js"></script>
+    <link rel="stylesheet" type="text/css" href="components2.css"/>
+  </head>
+
+  <body style="font-family:sans-serif; font-size: 10px">
+
+    <div ng-controller="ALC">
+
+      <div id="imageContainer" style="overflow:hidden; margin:0px; padding:0px" ng-mousemove="adjustCursor($event)" ng-style="{'width':displayWidth+'px'}">
+	
+	<div id="cursor" style="position: absolute; border-right: 1px solid blue; background-color: transparent; z-index: 100"
+	     ng-style="{'height':cursorHeight}"></div>
+
+	<div>
+	  <img ng-src="{{sample.image}}"/>
+	</div>
+      
+	<div ng-repeat="level in analysis.levels" style="position: relative; height: 100px" ng-style="{width:displayWidth+'px'}">
+	  <div ng-repeat="block in level.blocks" style="position: absolute; border-left: 1px solid #444"
+	       ng-style="{left:block.left+'px', 
+			  width:block.width+'px', 
+			  height:block.height+'px', 
+			  top:(100-block.height)+'px',
+			  backgroundColor:block.color}"></div>
+	</div>
+      </div>
+
+      <table cellspacing=0 cellpadding=5>
+	<tr><td>Feature:</td><td colspan=3><input type=checkbox ng-model="useMFCC"/> Use MFCC</td></tr>
+	<tr ng-repeat="level in config.levels">
+	  <td>Level {{$index+1}}</td>
+	  <td style="border-left: 1px solid gray" ng-style="{'opacity':($last && .2 || 1)}">Balance 1 : Spectral</td>
+	  <td ng-style="{'opacity':($last && .2 || 1)}"><numinput model="level.structWeight" min="0" max="1" precision=".01" size="5"/></td>
+	  <td ng-style="{'opacity':($last && .2 || 1)}">Structural</td>
+	  <td style="border-left: 1px solid gray" ng-style="{'opacity':($last && .2 || 1)}">Balance 2 : Similarity</td>
+	  <td ng-style="{'opacity':($last && .2 || 1)}"><numinput model="level.contWeight" min="0" max="1" precision=".01" size="5"/></td>
+	  <td ng-style="{'opacity':($last && .2 || 1)}">Continuity</td>
+	  <td style="border-left: 1px solid gray">Nb classes</td><td><numinput model="level.nbVertical" min="1" max="100" precision="1" size="5"/></td>
+	  <td style="border-left: 1px solid gray">V use DTW</td><td><input type=checkbox ng-model="level.vUseDTW"/></td>
+	  <td style="border-left: 1px solid gray">H use DTW</td><td><input type=checkbox ng-model="level.hUseDTW"/></td>
+	  <td style="border-left: 1px solid gray">Cut at min</td><td><input type=checkbox ng-model="level.cutAtMin"/></td>
+	  <td style="border-left: 1px solid gray">Cut at max</td><td><input type=checkbox ng-model="level.cutAtMax"/></td>
+	  <td style="border-left: 1px solid gray">Cut before max</td><td><input type=checkbox ng-model="level.cutBeforeMax"/></td>
+	</tr>
+
+	<p>
+	  <input type="button" ng-click="compute1()" value="Generate config"/>
+	  <input type="button" ng-click="compute2()" value="Load result"/>
+	  <input type="button" ng-click="computeBlocks()" value="Recolor"/>
+	  <input type="button" ng-click="zoomIn()" value="Zoom in" ng-disabled="displayWidth>=10000"/>
+	  <input type="button" ng-click="zoomOut()" value="Zoom out"  ng-disabled="displayWidth<=1000"/>
+	</p>
+    </div>
+
+  </body>
+</html>
