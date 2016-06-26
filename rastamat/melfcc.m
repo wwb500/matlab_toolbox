@@ -5,7 +5,7 @@ function [cepstra,aspectrum,pspectrum] = melfcc(samples, sr, varargin)
 %   - warp to a Mel frequency scale
 %   - take the DCT of the log-Mel-spectrum
 %   - return the first <ncep> components
-%  This version allows a lot of options to be controlled, as optional
+%  This version allows a lot of options to be controlled, as optional 
 %  'name', value pairs from the 3rd argument on: (defaults in parens)
 %    'wintime' (0.025): window length in sec
 %    'hoptime' (0.010): step between successive windows in sec
@@ -33,7 +33,7 @@ function [cepstra,aspectrum,pspectrum] = melfcc(samples, sr, varargin)
 %      'sumpower': 0
 % The following non-default values nearly duplicate HTK's MFCC
 % (i.e. melfcc(d,16000,opts...) =~= 2*htkmelfcc(:,[13,[1:12]])'
-%  where HTK config has PREEMCOEF = 0.97, NUMCHANS = 20, CEPLIFTER = 22,
+%  where HTK config has PREEMCOEF = 0.97, NUMCHANS = 20, CEPLIFTER = 22, 
 %  NUMCEPS = 12, WINDOWSIZE = 250000.0, USEHAMMING = T, TARGETKIND = MFCC_0)
 %     'lifterexp': -22
 %        'nbands': 20
@@ -44,7 +44,7 @@ function [cepstra,aspectrum,pspectrum] = melfcc(samples, sr, varargin)
 % For more detail on reproducing other programs' outputs, see
 % http://www.ee.columbia.edu/~dpwe/resources/matlab/rastamat/mfccs.html
 %
-% 2005-04-19 dpwe@ee.columbia.edu after rastaplp.m.
+% 2005-04-19 dpwe@ee.columbia.edu after rastaplp.m.  
 % Uses Mark Paskin's process_options.m from KPMtools
 % $Header: /Users/dpwe/matlab/rastamat/RCS/melfcc.m,v 1.3 2012/09/03 14:01:26 dpwe Exp dpwe $
 
@@ -52,64 +52,56 @@ if nargin < 2;   sr = 16000;    end
 
 % Parse out the optional arguments
 [wintime, hoptime, numcep, lifterexp, sumpower, preemph, dither, ...
-    minfreq, maxfreq, nbands, bwidth, dcttype, fbtype, usecmp, modelorder, ...
-    broaden, useenergy,pspectrum] = ...
+ minfreq, maxfreq, nbands, bwidth, dcttype, fbtype, usecmp, modelorder, ...
+ broaden, useenergy] = ...
     process_options(varargin, 'wintime', 0.025, 'hoptime', 0.010, ...
-    'numcep', 13, 'lifterexp', 0.6, 'sumpower', 1, 'preemph', 0.97, ...
-    'dither', 0, 'minfreq', 0, 'maxfreq', 4000, ...
-    'nbands', 40, 'bwidth', 1.0, 'dcttype', 2, ...
-    'fbtype', 'mel', 'usecmp', 0, 'modelorder', 0, ...
-    'broaden', 0, 'useenergy', 0,'pspectrum',[]);
+          'numcep', 13, 'lifterexp', 0.6, 'sumpower', 1, 'preemph', 0.97, ...
+	  'dither', 0, 'minfreq', 0, 'maxfreq', 4000, ...
+	  'nbands', 40, 'bwidth', 1.0, 'dcttype', 2, ...
+	  'fbtype', 'mel', 'usecmp', 0, 'modelorder', 0, ...
+          'broaden', 0, 'useenergy', 0);
 
 if preemph ~= 0
-    samples = filter([1 -preemph], 1, samples);
+  samples = filter([1 -preemph], 1, samples);
 end
 
 % Compute FFT power spectrum
-if isempty(pspectrum)
-    
-    [pspectrum,logE] = powspec(samples, sr, wintime, hoptime, dither);
-    
-else
-    
-    logE = log(sum(pspectrum));
-    
-end
+[pspectrum,logE] = powspec(samples, sr, wintime, hoptime, dither);
 
 aspectrum = audspec(pspectrum, sr, nbands, fbtype, minfreq, maxfreq, sumpower, bwidth);
 
 if (usecmp)
-    % PLP-like weighting/compression
-    aspectrum = postaud(aspectrum, maxfreq, fbtype, broaden);
+  % PLP-like weighting/compression
+  aspectrum = postaud(aspectrum, maxfreq, fbtype, broaden);
 end
 
 if modelorder > 0
-    
-    if (dcttype ~= 1)
-        disp(['warning: plp cepstra are implicitly dcttype 1 (not ', num2str(dcttype), ')']);
-    end
-    
-    % LPC analysis
-    lpcas = dolpc(aspectrum, modelorder);
-    
-    % convert lpc to cepstra
-    cepstra = lpc2cep(lpcas, numcep);
-    
-    % Return the auditory spectrum corresponding to the cepstra?
-    %  aspectrum = lpc2spec(lpcas, nbands);
-    % else return the aspectrum that the cepstra are based on, prior to PLP
-    
+
+  if (dcttype ~= 1) 
+    disp(['warning: plp cepstra are implicitly dcttype 1 (not ', num2str(dcttype), ')']);
+  end
+  
+  % LPC analysis 
+  lpcas = dolpc(aspectrum, modelorder);
+
+  % convert lpc to cepstra
+  cepstra = lpc2cep(lpcas, numcep);
+
+  % Return the auditory spectrum corresponding to the cepstra?
+%  aspectrum = lpc2spec(lpcas, nbands);
+  % else return the aspectrum that the cepstra are based on, prior to PLP
+
 else
-    
-    % Convert to cepstra via DCT
-    cepstra = spec2cep(aspectrum, numcep, dcttype);
-    
+  
+  % Convert to cepstra via DCT
+  cepstra = spec2cep(aspectrum, numcep, dcttype);
+
 end
 
 cepstra = lifter(cepstra, lifterexp);
 
 if useenergy
-    cepstra(1,:) = logE;
+  cepstra(1,:) = logE;
 end
-
+  
 

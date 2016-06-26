@@ -41,7 +41,7 @@ steppts = round(steptime*sr);
 NFFT = 2^(ceil(log(winpts)/log(2)));
 %WINDOW = hamming(winpts);
 %WINDOW = [0,hanning(winpts)'];
-WINDOW = hanning(winpts)';
+WINDOW = [hanning(winpts)'];
 % hanning gives much less noisy sidelobes
 NOVERLAP = winpts - steppts;
 SAMPRATE = sr;
