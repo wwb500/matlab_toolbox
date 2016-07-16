@@ -10,7 +10,7 @@ switch params.clustering
             clusterLocations=full(X)';
             prediction=ones(1,size(X,2));
         else
-            [prediction,clusterLocations] = kmeans(full(X)',params.nbc,'maxiter',1000,'replicates',5,'start','plus','Distance',params.similarity,'EmptyAction',params.emptyAction);
+            [prediction,clusterLocations] = kmeans(full(X)',params.nbc,'maxiter',1000,'replicates',params.rep,'start','plus','Distance',params.similarity,'EmptyAction',params.emptyAction);
         end
         
         clusterLocations=clusterLocations';

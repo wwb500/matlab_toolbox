@@ -19,7 +19,7 @@ elseif ~isempty(strfind(param.type,'lda'))
         sp=strsplit(param.type,'_');
         setting.thresh=str2double(sp{2});
         
-        setting.L = fitcdiscr(features',param.classes');
+        setting.L = fitcdiscr(features',param.classes(:),'discrimType','pseudoLinear');
         setting.err = loss(setting.L,features',param.classes');
         
         

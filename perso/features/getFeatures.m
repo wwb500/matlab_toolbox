@@ -1,24 +1,16 @@
-function [features] = getFeatures(signal,features2use,setting,save_mir)
+function [features] = getFeatures(signal,features2use,setting,toolbox)
 
-mirverbose(0);
-
-audio = miraudio(signal(:),setting.sr);
-frame = mirframe(audio,'length',setting.wintime,'s','hop',setting.hoptime,'s');
-features.size=size(mirgetdata(frame),2);
-
-switch features2use
-    case {'RQAchroma','RQAlogmel','RQAmfcc'}
-        frame = mirframe(audio,'length',setting.hoptime/setting.rqa.nbPoints*2,'s','hop',setting.hoptime/setting.rqa.nbPoints,'s');
-        mir.mel=mirspectrum(frame,'mel','min',setting.minFreq,'max',setting.maxFreq,'bands',setting.melBand);
-    case {'chroma','mel','logmel','mfcc','mfccD1','mfccD2','stats'}
-        mir.mel=mirspectrum(frame,'mel','min',setting.minFreq,'max',setting.maxFreq,'bands',setting.melBand);
-    case 'cqt'
-        mir.cqt=mirspectrum(frame','min',setting.minFreq,'max',setting.maxFreq,'ConstantQ',setting.cqtNbBins);
+if strcmp(toolbox,'mir')
+    mirverbose(0);
+    audio = miraudio(signal(:),setting.sr);
+    frame = mirframe(audio,'length',setting.wintime,'s','hop',setting.hoptime,'s');
+    features.size=size(mirgetdata(frame),2);
 end
 
 switch features2use
     case 'cqt'
         
+        mir.cqt=mirspectrum(frame,'Window','hamming','min',setting.minFreq,'max',setting.maxFreq,'ConstantQ',setting.cqtNbBins);
         features.cqt=mirgetdata(mir.cqt);
         
     case {'scattering','scatteringJoint'}
@@ -34,17 +26,35 @@ switch features2use
         
     case {'chroma','RQAchroma'}
         
-        mir.chroma=mirchromagram(frame','min',setting.minFreq,'max',setting.maxFreq);
-        
+        mir.chroma=mirchromagram(frame,'min',setting.minFreq,'max',setting.maxFreq);
         features.chroma=mirgetdata(mir.chroma);
         
     case {'mel','logmel','RQAlogmel'}
         
-        switch features2use
-            case {'logmel','RQAlogmel'}
-                features.logmel=log((squeeze(mirgetdata(mir.mel)))');
-            case 'mel'
-                features.mel=(squeeze(mirgetdata(mir.mel)))';
+        switch toolbox
+            
+            case 'mir'
+                
+                mir.mel=mirspectrum(frame,'Window','hamming','min',setting.minFreq,'max',setting.maxFreq,'mel','bands',setting.melBand);
+                
+                switch features2use
+                    case {'logmel','RQAlogmel'}
+                        features.logmel=log((squeeze(mirgetdata(mir.mel)))');
+                    case 'mel'
+                        features.mel=(squeeze(mirgetdata(mir.mel)))';
+                end
+                
+            case 'rastamat'
+                
+                [~,features.mel,~] = melfcc(signal(:),setting.sr,'wintime',setting.wintime,'hoptime',setting.hoptime,'minfreq',setting.minFreq,'maxfreq',setting.maxFreq,'lifterexp',0,'preemph',0,...
+                    'nbands',setting.melBand,'numcep',setting.mfccRank);
+                features.size=size(features.mel,2);
+                
+                switch features2use
+                    case {'logmel','RQAlogmel'}
+                        features.mel=log(features.mel);
+                end
+                
         end
         
     case {'mfcc','mfccD1','mfccD2','RQAmfcc'}
@@ -55,46 +65,62 @@ switch features2use
             mfccRank0=2;
         end
         
-        switch features2use
-            case {'mfcc','RQAmfcc'} % mfcc
-                
-                mir.mfcc_d0=mirmfcc(mir.mel,'rank',mfccRank0:setting.mfccRank,'Delta',0,'radius',setting.mfccDeltaRadius);
-                
-                features.mfcc=mirgetdata(mir.mfcc_d0);
-                
-            case 'mfccD1' % mfcc delta 1
-                
-                mir.mfcc_d0=mirmfcc(mir.mel,'rank',mfccRank0:setting.mfccRank,'Delta',0,'radius',setting.mfccDeltaRadius);
-                mir.mfcc_d1=mirmfcc(mir.mel,'rank',mfccRank0:setting.mfccRank,'Delta',1,'radius',setting.mfccDeltaRadius);
-                
-                mfcc_d0=mirgetdata(mir.mfcc_d0);
-                mfcc_d1=mirgetdata(mir.mfcc_d1);
-                
-                % add coef according to mir radius
-                mfcc_d1=[mfcc_d1(:,1:setting.mfccDeltaRadius) mfcc_d1 mfcc_d1(:,end-setting.mfccDeltaRadius+1:end)];
-                
-                features.mfccD1=[mfcc_d0;mfcc_d1];
-                
-            case 'mfccD2'
-                
-                mir.mfcc_d0=mirmfcc(mir.mel,'rank',mfccRank0:setting.mfccRank,'Delta',0,'radius',setting.mfccDeltaRadius);
-                mir.mfcc_d1=mirmfcc(mir.mel,'rank',mfccRank0:setting.mfccRank,'Delta',1,'radius',setting.mfccDeltaRadius);
-                mir.mfcc_d2=mirmfcc(mir.mel,'rank',mfccRank0:setting.mfccRank,'Delta',2,'radius',setting.mfccDeltaRadius);
-                
-                mfcc_d0=mirgetdata(mir.mfcc_d0);
-                mfcc_d1=mirgetdata(mir.mfcc_d1);
-                mfcc_d2=mirgetdata(mir.mfcc_d2);
-                
-                % add coef according to mir radius
-                mfcc_d1=[mfcc_d1(:,1:setting.mfccDeltaRadius) mfcc_d1 mfcc_d1(:,end-setting.mfccDeltaRadius+1:end)];
-                mfcc_d2=[mfcc_d2(:,1:setting.mfccDeltaRadius*2) mfcc_d2 mfcc_d2(:,end-setting.mfccDeltaRadius*2+1:end)];
+        switch toolbox
+            case 'mir'
+                mir.mel=mirspectrum(frame,'Window','hamming','min',setting.minFreq,'max',setting.maxFreq,'mel','bands',setting.melBand);
                 
                 
-                features.mfccD2=[mfcc_d0;mfcc_d1;mfcc_d2];
+                
+                switch features2use
+                    case {'mfcc','RQAmfcc'} % mfcc
+                        
+                        mir.mfcc_d0=mirmfcc(mir.mel,'rank',mfccRank0:setting.mfccRank,'Delta',0,'radius',setting.mfccDeltaRadius);
+                        
+                        features.mfcc=mirgetdata(mir.mfcc_d0);
+                        
+                    case 'mfccD1' % mfcc delta 1
+                        
+                        mir.mfcc_d0=mirmfcc(mir.mel,'rank',mfccRank0:setting.mfccRank,'Delta',0,'radius',setting.mfccDeltaRadius);
+                        mir.mfcc_d1=mirmfcc(mir.mel,'rank',mfccRank0:setting.mfccRank,'Delta',1,'radius',setting.mfccDeltaRadius);
+                        
+                        mfcc_d0=mirgetdata(mir.mfcc_d0);
+                        mfcc_d1=mirgetdata(mir.mfcc_d1);
+                        
+                        % add coef according to mir radius
+                        mfcc_d1=[mfcc_d1(:,1:setting.mfccDeltaRadius) mfcc_d1 mfcc_d1(:,end-setting.mfccDeltaRadius+1:end)];
+                        
+                        features.mfccD1=[mfcc_d0;mfcc_d1];
+                        
+                    case 'mfccD2'
+                        
+                        mir.mfcc_d0=mirmfcc(mir.mel,'rank',mfccRank0:setting.mfccRank,'Delta',0,'radius',setting.mfccDeltaRadius);
+                        mir.mfcc_d1=mirmfcc(mir.mel,'rank',mfccRank0:setting.mfccRank,'Delta',1,'radius',setting.mfccDeltaRadius);
+                        mir.mfcc_d2=mirmfcc(mir.mel,'rank',mfccRank0:setting.mfccRank,'Delta',2,'radius',setting.mfccDeltaRadius);
+                        
+                        mfcc_d0=mirgetdata(mir.mfcc_d0);
+                        mfcc_d1=mirgetdata(mir.mfcc_d1);
+                        mfcc_d2=mirgetdata(mir.mfcc_d2);
+                        
+                        % add coef according to mir radius
+                        mfcc_d1=[mfcc_d1(:,1:setting.mfccDeltaRadius) mfcc_d1 mfcc_d1(:,end-setting.mfccDeltaRadius+1:end)];
+                        mfcc_d2=[mfcc_d2(:,1:setting.mfccDeltaRadius*2) mfcc_d2 mfcc_d2(:,end-setting.mfccDeltaRadius*2+1:end)];
+                        
+                        
+                        features.mfccD2=[mfcc_d0;mfcc_d1;mfcc_d2];
+                        
+                end
+                
+            case 'rastamat'
+                [features.mfcc,~,~] = melfcc(signal(:),setting.sr,'wintime',setting.wintime,'hoptime',setting.hoptime,'minfreq',setting.minFreq,'maxfreq',setting.maxFreq,'lifterexp',0,'preemph',0,...
+                    'nbands',setting.melBand,'numcep',setting.mfccRank);
+                features.mfcc=features.mfcc(mfccRank0:setting.mfccRank,:);
+                features.size=size(features.mfcc,2);
                 
         end
         
     case {'stats'}
+        
+        mir.mel=mirspectrum(frame,'Window','hamming','min',setting.minFreq,'max',setting.maxFreq,'mel','bands',setting.melBand);
         
         mir.stats(1,:)=mircentroid(mir.mel);
         mir.stats(2,:)=mirspread(mir.mel);
@@ -116,6 +142,7 @@ switch features2use
         
         % logmel gbfb toolbox
         % logmel=log_mel_spectrogram(signal, setting.sr, setting.hoptime*1000,setting.wintime*1000, [setting.minFreq setting.maxFreq], setting.melBand);
+        mir.mel=mirspectrum(frame,'Window','hamming','min',setting.minFreq,'max',setting.maxFreq,'mel','bands',setting.melBand);
         
         % logmel mir toolbox
         logmel=log((squeeze(mirgetdata(mir.mel)))');
@@ -142,8 +169,3 @@ switch features2use
         [features.RQAgbfb] = getRQA(features.gbfb,features.size,setting.rqa);
 end
 
-%% save mir
-
-if save_mir==1
-    features.mir=mir;
-end

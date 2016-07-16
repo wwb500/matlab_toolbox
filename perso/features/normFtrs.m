@@ -29,7 +29,7 @@ switch param.type
         
     case {'scattering'}
         
-        [ features ] = scatteringNorm(features,param);
+        [ features,setting] = scatteringNorm(features,param);
         
 end
 

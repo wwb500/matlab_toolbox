@@ -1,25 +1,31 @@
-function [ data ] = scatteringNorm(data,params)
+function [ data,setting] = scatteringNorm(data,params)
 
-data=data';
-
-if params.ftrsNorm_scat_threshold~=0
-    med = median(data);
-    data = bsxfun(@rdivide, data, med*params.ftrsNorm_scat_threshold);
+if isfield(params,'med')
+    setting.med=params.med;
+    setting.v=params.v;
+else
+    setting.type='scattering';
+    setting.ftrsNorm_scat_threshold=params.ftrsNorm_scat_threshold;
+    setting.ftrsNorm_scat_selection=params.ftrsNorm_scat_selection;
+    setting.ftrsNorm_scat_log=params.ftrsNorm_scat_log;
+    setting.med = median(data,2);
+    setting.v = var(data,[],2);
 end
 
-if params.ftrsNorm_scat_log~=0
-    data = log(data);
+if params.ftrsNorm_scat_threshold~=0 
+    data = bsxfun(@rdivide, data, setting.med)*params.ftrsNorm_scat_threshold;
 end
 
 if params.ftrsNorm_scat_selection~=1
-    v = var(data);
-    v = v/sum(v);
-    [~,i] = sort(-v);
-    cv = cumsum(v(i));
-    data =  data(:,i(cv<params.ftrsNorm_scat_selection));
+    setting.v = setting.v/sum(setting.v);
+    [~,i] = sort(-setting.v);
+    cv = cumsum(setting.v(i));
+    data =  data(i(cv<params.ftrsNorm_scat_selection),:);
 end
 
-data=data';
+if params.ftrsNorm_scat_log==1
+    data = log1p(data);
+end
 
 end
 

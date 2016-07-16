@@ -69,6 +69,7 @@ else
     [sorted, idx] = sort(D);
     ls = sorted(nn+1, :);
     ls = sqrt(ls);
+
     A = exp(-D./(ls'*ls));
         ZERO_DIAG = ~eye(n);
         A = A .* ZERO_DIAG;

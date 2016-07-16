@@ -6,8 +6,8 @@ switch params.mode
     
     case 'centroid'
         [ simClus ] = computeSimilarity(features,params);
-        simClus=simClus/max(simClus(:));
-        simClus(logical(eye(size(simClus)))) = 1;
+%         simClus=simClus/max(simClus(:));
+%         simClus(logical(eye(size(simClus)))) = 1;
         if params.similarity_thresh~=1 && params.similarity_thresh~=0
             simClus=simClus.*getRP(simClus,params.similarity_thresh,'sim');
         end

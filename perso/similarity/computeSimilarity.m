@@ -4,10 +4,13 @@ X=full(X');
 
 switch param.similarity
     
-    case {'euclidean','sqeuclidean','cosine'}
+    case {'euclidean'}
+        A = dist2(X, X); % need to be dist
+    case {'sqeuclidean'}
+        A = sqrt(dist2(X, X)); % need to be dist
+    case {'cosine'}
         D=squareform(pdist(X,param.similarity));
-        A=1-D/(max(D(:)));
-        
+        A=1-D/(max(D(:)));  
     case 'inner_sparse'
         D = dist2(X, X);
         Xnorm = X';
@@ -27,13 +30,12 @@ switch param.similarity
         
     case 'gaussian_full'
         D = dist2(X, X);
-        nn=round(param.nn*size(D,2));
-        A = scale_dist3(D, nn);
+        nn=max([1 round(param.nn*size(D,2))]);
+        % A = scale_dist3(D, nn);
+        [ A ] = rbfKernel(D,'st-1nn',nn);
         
     otherwise
         error('invalid similarity setting.')
-        
-        
 end
 
 clearvars Xnorm d D;
